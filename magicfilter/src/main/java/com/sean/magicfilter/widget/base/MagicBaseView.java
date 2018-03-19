@@ -21,7 +21,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
- * Created by why8222 on 2016/2/25.
+ * Created by machenshuang on 2017/2/25.
  */
 public abstract class MagicBaseView extends GLSurfaceView implements GLSurfaceView.Renderer{
     /**

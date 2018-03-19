@@ -1,7 +1,7 @@
 package com.sean.magicfilter.camera.utils;
 
 /**
- * Created by why8222 on 2016/2/25.
+ * Created by machenshuang on 2017/2/25.
  */
 public class CameraInfo {
 

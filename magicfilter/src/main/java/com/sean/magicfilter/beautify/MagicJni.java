@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import java.nio.ByteBuffer;
 
 /**
- * Created by why8222 on 2016/2/29.
+ * Created by machenshuang on 2017/2/29.
  */
 public class MagicJni {
     static{
