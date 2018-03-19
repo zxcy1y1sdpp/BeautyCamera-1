@@ -1,5 +1,6 @@
 package com.sean.www.view.edit.adjust;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -18,6 +19,7 @@ import com.sean.www.widget.TwoLineSeekBar.OnSeekChangeListener;
 import com.sean.magicfilter.MagicEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 
+@SuppressLint("ValidFragment")
 public class ImageEditAdjustView extends ImageEditFragment {
 	private TwoLineSeekBar mSeekBar;
 	private float contrast = -50.0f;

@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Created by why8222 on 2016/3/17.
+ * Created by machenshuang on 2017/3/17.
  */
 public class CameraActivity extends Activity{
     private LinearLayout mFilterLayout;
