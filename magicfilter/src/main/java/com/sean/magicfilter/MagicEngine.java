@@ -1,5 +1,7 @@
 package com.sean.magicfilter;
 
+import android.util.Log;
+
 import com.sean.magicfilter.camera.CameraEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
@@ -8,6 +10,7 @@ import com.sean.magicfilter.widget.MagicCameraView;
 import com.sean.magicfilter.widget.base.MagicBaseView;
 
 import java.io.File;
+import java.util.logging.Logger;
 
 /**
  * Created by machenshuang on 2017/2/25.
@@ -17,6 +20,8 @@ import java.io.File;
  * 美颜相机管理类，主要保存图片和记录，设置美颜等级
  */
 public class MagicEngine {
+
+    private static final String TAG = "MagicEngine";
     private static MagicEngine magicEngine;
 
     public static MagicEngine getInstance(){
@@ -35,6 +40,11 @@ public class MagicEngine {
     }
 
     public void savePicture(File file, SavePictureTask.OnPictureSaveListener listener){
+        if (file!=null){
+            Log.d(TAG,"file is not null");
+        } else {
+            Log.d(TAG,"file is null");
+        }
         SavePictureTask savePictureTask = new SavePictureTask(file, listener);
         MagicParams.magicBaseView.savePicture(savePictureTask);
     }
