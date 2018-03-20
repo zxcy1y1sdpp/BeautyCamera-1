@@ -11,7 +11,7 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.RelativeLayout;
 
 import com.sean.www.R;
-import com.sean.www.view.edit.ImageEditFragment;
+import com.sean.www.view.ImageEditFragment;
 import com.sean.www.widget.TwoLineSeekBar;
 
 public class ImageEditBeautyView extends ImageEditFragment {

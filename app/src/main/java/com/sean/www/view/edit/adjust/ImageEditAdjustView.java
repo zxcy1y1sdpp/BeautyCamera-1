@@ -13,7 +13,7 @@ import android.widget.RadioGroup.OnCheckedChangeListener;
 import android.widget.TextView;
 
 import com.sean.www.R;
-import com.sean.www.view.edit.ImageEditFragment;
+import com.sean.www.view.ImageEditFragment;
 import com.sean.www.widget.TwoLineSeekBar;
 import com.sean.www.widget.TwoLineSeekBar.OnSeekChangeListener;
 import com.sean.magicfilter.MagicEngine;
