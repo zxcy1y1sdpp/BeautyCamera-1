@@ -152,9 +152,14 @@ public class FocusHelper {
         float inerCircleR = mInnerCircleRadius;
         long focusTime = currentTime - mFocusStartTime;
 
-        if (focusTime < FOCUS_DURATION_MS){
+        /*if (focusTime < FOCUS_DURATION_MS){
             inerCircleR = mInterpolator.getInterpolation(focusTime)
-        }
+        }*/
+
+        paint.setStrokeWidth(mInnerCircleWidth);
+        canvas.drawCircle(posX + clipBounds.left, posY + clipBounds.top,
+                mInnerCircleRadius,paint);
+        return true;
     }
 
     public synchronized boolean isAutoFocus() {
