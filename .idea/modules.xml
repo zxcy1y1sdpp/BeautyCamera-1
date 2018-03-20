@@ -6,7 +6,9 @@
       <module fileurl="file://E:\Project\Android Project\MagicCamera\Project-AndroidStudio\Project-AndroidStudio.iml" filepath="E:\Project\Android Project\MagicCamera\Project-AndroidStudio\Project-AndroidStudio.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://E:\Project\Android Project\MagicCamera\Project-AndroidStudio\app\app.iml" filepath="E:\Project\Android Project\MagicCamera\Project-AndroidStudio\app\app.iml" />
+      <module fileurl="file://D:\AndroidProject\BeautyCamera\app\app.iml" filepath="D:\AndroidProject\BeautyCamera\app\app.iml" />
       <module fileurl="file://$PROJECT_DIR$/magicfilter/magicfilter.iml" filepath="$PROJECT_DIR$/magicfilter/magicfilter.iml" />
+      <module fileurl="file://D:\AndroidProject\BeautyCamera\magicfilter\magicfilter.iml" filepath="D:\AndroidProject\BeautyCamera\magicfilter\magicfilter.iml" />
     </modules>
   </component>
 </project>
