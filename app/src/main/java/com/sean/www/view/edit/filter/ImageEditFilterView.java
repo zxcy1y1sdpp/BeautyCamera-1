@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.sean.www.R;
-import com.sean.www.view.edit.ImageEditFragment;
+import com.sean.www.view.ImageEditFragment;
 
 public class ImageEditFilterView extends ImageEditFragment {
 	

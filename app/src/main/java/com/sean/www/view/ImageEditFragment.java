@@ -1,4 +1,4 @@
-package com.sean.www.view.edit;
+package com.sean.www.view;
 
 import android.app.Fragment;
 import android.content.Context;
