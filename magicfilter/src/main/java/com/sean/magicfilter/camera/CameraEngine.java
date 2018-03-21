@@ -1,7 +1,10 @@
 package com.sean.magicfilter.camera;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -16,10 +19,24 @@ public class CameraEngine {
     private static int cameraID = 0;
     private static SurfaceTexture surfaceTexture;
     private static SurfaceView surfaceView;
+    private static CameraClickener mListener;
+    private static Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
+        @Override
+        public void onAutoFocus(boolean success, Camera camera) {
+            if (success){
+                if (mListener!=null){
+                    mListener.startFocus();
+                }
+            } else {
+                mListener.stopFocus();
+            }
+        }
+    };
 
     public static Camera getCamera(){
         return camera;
     }
+
 
     /**
      * 打开相机
@@ -29,6 +46,7 @@ public class CameraEngine {
         if(camera == null){
             try{
                 camera = Camera.open(cameraID);
+                camera.autoFocus(autoFocusCallback);
                 setDefaultParameters();
                 return true;
             }catch(RuntimeException e){
@@ -44,6 +62,7 @@ public class CameraEngine {
                 camera = Camera.open(id);
                 cameraID = id;
                 setDefaultParameters();
+
                 return true;
             }catch(RuntimeException e){
                 return false;
@@ -55,21 +74,24 @@ public class CameraEngine {
     public static void releaseCamera(){
         if(camera != null){
             camera.setPreviewCallback(null);
+            camera.autoFocus(null);
             camera.stopPreview();
             camera.release();
             camera = null;
         }
     }
 
+
+
     public void resumeCamera(){
         openCamera();
     }
 
-    public void setParameters(Parameters parameters){
+    public static void setParameters(Parameters parameters){
         camera.setParameters(parameters);
     }
 
-    public Parameters getParameters(){
+    public static Parameters getParameters(){
         if(camera != null)
             camera.getParameters();
         return null;
@@ -121,10 +143,17 @@ public class CameraEngine {
     public static void startPreview(){
         if(camera != null)
             camera.startPreview();
+        if (mListener!=null){
+            mListener.startFocus();
+        }
+
     }
 
     public static void stopPreview(){
         camera.stopPreview();
+        if (mListener!=null){
+            mListener.stopFocus();
+        }
     }
 
     public static void setRotation(int rotation){
@@ -136,6 +165,36 @@ public class CameraEngine {
     public static void takePicture(Camera.ShutterCallback shutterCallback, Camera.PictureCallback rawCallback,
                                    Camera.PictureCallback jpegCallback){
         camera.takePicture(shutterCallback, rawCallback, jpegCallback);
+    }
+
+    public static boolean setFocusAndMeteringArea(List<CameraEngine.Area> focusAreas, List<CameraEngine.Area> meterAreas) {
+        List<Camera.Area> camera_areas = new ArrayList<Camera.Area>();
+        List<Camera.Area> meter_areas = new ArrayList<Camera.Area>();
+        for(CameraEngine.Area area : focusAreas) {
+            camera_areas.add(new Camera.Area(area.rect, area.weight));
+        }
+        for(CameraEngine.Area area : meterAreas) {
+            meter_areas.add(new Camera.Area(area.rect, area.weight));
+        }
+        Camera.Parameters parameters = getParameters();
+        String focus_mode = parameters.getFocusMode();
+        // getFocusMode() is documented as never returning null, however I've had null pointer exceptions reported in Google Play
+        if( parameters.getMaxNumFocusAreas() != 0 && focus_mode != null && ( focus_mode.equals(Camera.Parameters.FOCUS_MODE_AUTO) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_MACRO) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO) ) ) {
+            parameters.setFocusAreas(camera_areas);
+
+            // also set metering areas
+            parameters.setMeteringAreas(meter_areas);
+
+            setParameters(parameters);
+
+            return true;
+        }
+        else if( parameters.getMaxNumMeteringAreas() != 0 ) {
+            parameters.setMeteringAreas(meter_areas);
+
+            setParameters(parameters);
+        }
+        return false;
     }
 
     /**
@@ -155,5 +214,24 @@ public class CameraEngine {
         info.pictureWidth = size.width;
         info.pictureHeight = size.height;
         return info;
+    }
+
+    public static void setCameraClistener(CameraClickener listener){
+        mListener = listener;
+    }
+
+    public interface CameraClickener{
+        void startFocus();
+        void stopFocus();
+    }
+
+    public static class Area {
+        public Rect rect = null;
+        public int weight = 0;
+
+        public Area(Rect rect, int weight) {
+            this.rect = rect;
+            this.weight = weight;
+        }
     }
 }

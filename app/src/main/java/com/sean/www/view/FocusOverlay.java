@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.sean.www.activity.CameraActivity;
@@ -22,6 +23,14 @@ public class FocusOverlay extends View {
     public FocusOverlay(Context context) {
         super(context);
         mActivity = (CameraActivity) context;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (mActivity != null) {
+            return mActivity.touchEvent(event);
+        }
+        return false;
     }
 
     @Override

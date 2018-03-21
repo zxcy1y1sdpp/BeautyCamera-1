@@ -17,10 +17,11 @@ import com.sean.www.view.FocusOverlay;
  */
 
 public class FocusHelper {
-    private static final int FOCUS_WAITING = 0;
-    private static final int FOCUS_SUCCESS = 1;
+    public static final int FOCUS_WAITING = 0;
+    public static final int FOCUS_SUCCESS = 1;
     public static final int FOCUS_FAILED = 2;
     public static final int FOCUS_DONE = 3;
+    public static final int FOCUS_WAITING_STATE_NONE = 5;
     private int mAmplitude;
     private OvershootInterpolator mInterpolator;
     private static int MAX_STAY_TIME = 500;
@@ -36,8 +37,8 @@ public class FocusHelper {
     private int mOuterCircleWidth;
     private int mInnerCircleWidth;
     private long mFocusStartTime;
-    private int mFocusState = FOCUS_WAITING;
-    private boolean mIsAutoFocus;
+    public int mFocusState = FOCUS_WAITING;
+    private boolean mIsAutoFocus = false;
     private int mFocusWaitingState;
     private long mKeepTimestamp;
 
@@ -110,7 +111,7 @@ public class FocusHelper {
     }
 
     public boolean draw(Canvas canvas, Paint paint, Rect clipBounds, boolean keep){
-        /*if (!isAutoFocus()){
+        if (!isAutoFocus()){
             return false;
         }
         if (isFocusNone()){
@@ -118,7 +119,7 @@ public class FocusHelper {
         }
 
         long currentTime = System.currentTimeMillis();
-        long stayTime = currentTime - mFocusCompleteTime;
+        long stayTime = currentTime - mFocusStartTime;
 
         if (keep && mKeepTimestamp == 0){
             mKeepTimestamp = currentTime;
@@ -127,10 +128,9 @@ public class FocusHelper {
         }
 
         if (!isFocusWaiting()
-                && stayTime > MAX_STAY_TIME
-                && !(keep && mFocusCompleteTime > mKeepTimestamp)) {
+                && stayTime < MAX_STAY_TIME) {
             return false;
-        }*/
+        }
 
         canvas.save();
         int posX;
@@ -151,18 +151,23 @@ public class FocusHelper {
                 mOuterCircleRadius, paint);
 
         float inerCircleR = mInnerCircleRadius;
-        //long focusTime = currentTime - mFocusStartTime;
+        long focusTime = currentTime - mFocusStartTime;
 
-        /*if (focusTime < FOCUS_DURATION_MS){
-            inerCircleR = mInterpolator.getInterpolation(focusTime)
-        }*/
+        if (focusTime < FOCUS_DURATION_MS) {
+            inerCircleR = mInterpolator.getInterpolation(focusTime / (float)FOCUS_DURATION_MS)
+                    * mAmplitude + mInnerCircleRadius;
+        }
 
         paint.setStrokeWidth(mInnerCircleWidth);
         canvas.drawCircle(posX + clipBounds.left, posY + clipBounds.top,
-                mInnerCircleRadius,paint);
+                inerCircleR,paint);
         canvas.restore();
+
+        mFocusOverlay.postInvalidateDelayed(80);
         return true;
     }
+
+
 
     public synchronized boolean isAutoFocus() {
         return mIsAutoFocus;

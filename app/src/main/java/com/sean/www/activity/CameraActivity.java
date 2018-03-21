@@ -9,6 +9,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -18,12 +19,15 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import com.sean.magicfilter.camera.CameraEngine;
+import com.sean.magicfilter.camera.utils.CameraInfo;
 import com.sean.www.R;
 import com.sean.www.adapter.FilterAdapter;
 import com.sean.magicfilter.MagicEngine;
@@ -31,10 +35,12 @@ import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
 import com.sean.magicfilter.widget.MagicCameraView;
 import com.sean.www.helper.FocusHelper;
+import com.sean.www.utils.TapAreaUtil;
 import com.sean.www.view.FocusOverlay;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -53,6 +59,26 @@ public class CameraActivity extends Activity{
     private FocusOverlay mFocuOverlayView;
     private FocusHelper mFocusHelper;
     private FrameLayout mCameraFlayout;
+    private Matrix cameraToPreviewMatrix = new Matrix();
+    private Matrix previewToCameraMatrix = new Matrix();
+    private int mPreWidth;
+    private int mPreHeight;
+
+
+    private CameraEngine.CameraClickener mListener = new CameraEngine.CameraClickener() {
+        @Override
+        public void startFocus() {
+            mFocusHelper.setAutoFocus(true);
+            mFocusHelper.setFocusComplete(mFocusHelper.FOCUS_WAITING,-1);
+            mFocuOverlayView.invalidate();
+        }
+
+        @Override
+        public void stopFocus() {
+            mFocusHelper.setAutoFocus(false);
+            mFocuOverlayView.invalidate();
+        }
+    } ;
 
     private ImageView btn_shutter;
     private ImageView btn_mode;
@@ -112,6 +138,8 @@ public class CameraActivity extends Activity{
         magicEngine = builder
                 .build((MagicCameraView)findViewById(R.id.glsurfaceview_camera));
         initView();
+        CameraEngine.setCameraClistener(mListener);
+
     }
 
     private void initView(){
@@ -134,12 +162,13 @@ public class CameraActivity extends Activity{
         getWindowManager().getDefaultDisplay().getSize(screenSize);
 
         mFocuOverlayView = new FocusOverlay(this);
-        mFocusHelper = new FocusHelper(this,mFocuOverlayView);
         mCameraFlayout.addView(mFocuOverlayView);
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mFocuOverlayView.getLayoutParams();
         params.width = screenSize.x;
         params.height = screenSize.x * 4 / 3;
         mFocuOverlayView.setLayoutParams(params);
+        mPreWidth = params.width;
+        mPreHeight = params.height;
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -154,11 +183,7 @@ public class CameraActivity extends Activity{
         animator.setDuration(500);
         animator.setRepeatCount(ValueAnimator.INFINITE);
 
-
-
-
-
-
+        mFocusHelper = new FocusHelper(this,mFocuOverlayView);
     }
 
     private FilterAdapter.onFilterChangeListener onFilterChangeListener = new FilterAdapter.onFilterChangeListener(){
@@ -330,10 +355,64 @@ public class CameraActivity extends Activity{
         return mediaFile;
     }
 
-    public void draw(Canvas canvas, Paint mPaint){
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mListener = null;
+    }
+
+    public void draw(Canvas canvas, Paint paint){
         Rect rect = canvas.getClipBounds();
-        int width = rect.width();
-        int hight = rect.height();
-        mFocusHelper.draw(canvas,mPaint,rect,true);
+        mFocusHelper.draw(canvas, paint, rect, true);
+    }
+
+    public boolean touchEvent(MotionEvent event){
+        int x = (int) event.getX();
+        int y = (int) event.getY();
+        mFocusHelper.setAutoFocus(true);
+        mFocusHelper.setHasFocusArea(true);
+        ArrayList<CameraEngine.Area> focusAreas = getAreas(x, y, 1.0f);
+        ArrayList<CameraEngine.Area> meterAreas = getAreas(x, y, 1.5f);
+        if( CameraEngine.setFocusAndMeteringArea(focusAreas, meterAreas) ) {
+            mFocusHelper.setFocusScreen(x, y);
+            mFocusHelper.setHasFocusArea(true);
+            mFocuOverlayView.invalidate();
+        }
+        return true;
+    }
+
+
+    private ArrayList<CameraEngine.Area> getAreas(float x, float y, float areaMultiple) {
+        calculateCameraToPreviewMatrix();
+
+        Rect rect = TapAreaUtil.calculateTapArea((int)x, (int)y, areaMultiple, mPreWidth,
+                mPreHeight, previewToCameraMatrix);
+
+        ArrayList<CameraEngine.Area> areas = new ArrayList<CameraEngine.Area>();
+        areas.add(new CameraEngine.Area(rect, 1));
+        return areas;
+    }
+
+    private void calculateCameraToPreviewMatrix() {
+        if (CameraEngine.getCamera() == null){
+            return;
+        }
+        cameraToPreviewMatrix.reset();
+        // from http://developer.android.com/reference/android/hardware/Camera.Face.html#rect
+        // Need mirror for front camera
+        boolean mirror = CameraEngine.getCameraInfo().isFront;
+        cameraToPreviewMatrix.setScale(mirror ? -1 : 1, 1);
+        // This is the value for android.hardware.Camera.setDisplayOrientation.
+        cameraToPreviewMatrix.postRotate(CameraEngine.getCameraInfo().orientation);
+        // Camera driver coordinates range from (-1000, -1000) to (1000, 1000).
+        // UI coordinates range from (0, 0) to (width, height).
+        int width = mPreWidth;
+        int height = mPreHeight;
+        cameraToPreviewMatrix.postScale(width / 2000f, height / 2000f);
+        cameraToPreviewMatrix.postTranslate(width / 2f, height / 2f);
+
+        if(!cameraToPreviewMatrix.invert(previewToCameraMatrix) ) {
+
+        }
     }
 }
