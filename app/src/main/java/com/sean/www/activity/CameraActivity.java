@@ -8,7 +8,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -16,9 +19,10 @@ import android.support.v4.content.PermissionChecker;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 
 import com.sean.www.R;
 import com.sean.www.adapter.FilterAdapter;
@@ -26,6 +30,8 @@ import com.sean.magicfilter.MagicEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
 import com.sean.magicfilter.widget.MagicCameraView;
+import com.sean.www.helper.FocusHelper;
+import com.sean.www.view.FocusOverlay;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -44,6 +50,9 @@ public class CameraActivity extends Activity{
     private final int MODE_PIC = 1;
     private final int MODE_VIDEO = 2;
     private int mode = MODE_PIC;
+    private FocusOverlay mFocuOverlayView;
+    private FocusHelper mFocusHelper;
+    private FrameLayout mCameraFlayout;
 
     private ImageView btn_shutter;
     private ImageView btn_mode;
@@ -108,6 +117,7 @@ public class CameraActivity extends Activity{
     private void initView(){
         mFilterLayout = (LinearLayout)findViewById(R.id.layout_filter);
         mFilterListView = (RecyclerView) findViewById(R.id.filter_listView);
+        mCameraFlayout = findViewById(R.id.fl_camera);
 
         btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
         btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
@@ -118,6 +128,18 @@ public class CameraActivity extends Activity{
         findViewById(R.id.btn_camera_switch).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_beauty).setOnClickListener(btn_listener);
+
+        //获取相机预览大小
+        Point screenSize = new Point();
+        getWindowManager().getDefaultDisplay().getSize(screenSize);
+
+        mFocuOverlayView = new FocusOverlay(this);
+        mFocusHelper = new FocusHelper(this,mFocuOverlayView);
+        mCameraFlayout.addView(mFocuOverlayView);
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mFocuOverlayView.getLayoutParams();
+        params.width = screenSize.x;
+        params.height = screenSize.x * 4 / 3;
+        mFocuOverlayView.setLayoutParams(params);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -132,14 +154,11 @@ public class CameraActivity extends Activity{
         animator.setDuration(500);
         animator.setRepeatCount(ValueAnimator.INFINITE);
 
-        //获取相机预览大小
-        Point screenSize = new Point();
-        getWindowManager().getDefaultDisplay().getSize(screenSize);
-        MagicCameraView cameraView = (MagicCameraView)findViewById(R.id.glsurfaceview_camera);
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) cameraView.getLayoutParams();
-        params.width = screenSize.x;
-        params.height = screenSize.x * 4 / 3;
-        cameraView.setLayoutParams(params);
+
+
+
+
+
     }
 
     private FilterAdapter.onFilterChangeListener onFilterChangeListener = new FilterAdapter.onFilterChangeListener(){
@@ -309,5 +328,12 @@ public class CameraActivity extends Activity{
                 "IMG_" + timeStamp + ".jpg");
 
         return mediaFile;
+    }
+
+    public void draw(Canvas canvas, Paint mPaint){
+        Rect rect = canvas.getClipBounds();
+        int width = rect.width();
+        int hight = rect.height();
+        mFocusHelper.draw(canvas,mPaint,rect,true);
     }
 }

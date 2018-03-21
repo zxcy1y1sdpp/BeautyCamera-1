@@ -2,7 +2,11 @@ package com.sean.www.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.view.View;
+
+import com.sean.www.activity.CameraActivity;
 
 /**
  * author: machenshuang
@@ -12,13 +16,17 @@ import android.view.View;
 
 public class FocusOverlay extends View {
 
+    private CameraActivity mActivity;
+    private Paint mPaint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
+
     public FocusOverlay(Context context) {
         super(context);
+        mActivity = (CameraActivity) context;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
+        mActivity.draw(canvas, mPaint);
     }
 }

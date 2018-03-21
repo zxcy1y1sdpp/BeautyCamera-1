@@ -8,7 +8,6 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 import com.sean.magicfilter.camera.CameraEngine;
@@ -38,6 +37,7 @@ import javax.microedition.khronos.opengles.GL10;
  */
 public class MagicCameraView extends MagicBaseView {
 
+
     //滤镜的输入层
     private MagicCameraInputFilter cameraInputFilter;
 
@@ -62,6 +62,8 @@ public class MagicCameraView extends MagicBaseView {
     private static TextureMovieEncoder videoEncoder = new TextureMovieEncoder();
 
     private File outputFile;
+
+
 
     public MagicCameraView(Context context, AttributeSet attrs) {
         super(context, attrs);

@@ -6,11 +6,10 @@ import com.sean.magicfilter.camera.CameraEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
 import com.sean.magicfilter.helper.SavePictureTask;
-import com.sean.magicfilter.widget.MagicCameraView;
 import com.sean.magicfilter.widget.base.MagicBaseView;
+import com.sean.magicfilter.widget.MagicCameraView;
 
 import java.io.File;
-import java.util.logging.Logger;
 
 /**
  * Created by machenshuang on 2017/2/25.

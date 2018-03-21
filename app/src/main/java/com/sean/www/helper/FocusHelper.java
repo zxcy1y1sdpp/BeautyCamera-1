@@ -41,6 +41,7 @@ public class FocusHelper {
     private int mFocusWaitingState;
     private long mKeepTimestamp;
 
+
     public FocusHelper(Context context, FocusOverlay focusOverlay){
         mScaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
         mOuterCircleRadius = DimensUtil.dip2px(mScaledDensity,40);
@@ -109,7 +110,7 @@ public class FocusHelper {
     }
 
     public boolean draw(Canvas canvas, Paint paint, Rect clipBounds, boolean keep){
-        if (!isAutoFocus()){
+        /*if (!isAutoFocus()){
             return false;
         }
         if (isFocusNone()){
@@ -129,7 +130,7 @@ public class FocusHelper {
                 && stayTime > MAX_STAY_TIME
                 && !(keep && mFocusCompleteTime > mKeepTimestamp)) {
             return false;
-        }
+        }*/
 
         canvas.save();
         int posX;
@@ -150,7 +151,7 @@ public class FocusHelper {
                 mOuterCircleRadius, paint);
 
         float inerCircleR = mInnerCircleRadius;
-        long focusTime = currentTime - mFocusStartTime;
+        //long focusTime = currentTime - mFocusStartTime;
 
         /*if (focusTime < FOCUS_DURATION_MS){
             inerCircleR = mInterpolator.getInterpolation(focusTime)
@@ -159,6 +160,7 @@ public class FocusHelper {
         paint.setStrokeWidth(mInnerCircleWidth);
         canvas.drawCircle(posX + clipBounds.left, posY + clipBounds.top,
                 mInnerCircleRadius,paint);
+        canvas.restore();
         return true;
     }
 
