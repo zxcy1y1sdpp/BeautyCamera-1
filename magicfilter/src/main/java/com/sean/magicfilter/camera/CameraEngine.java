@@ -93,7 +93,7 @@ public class CameraEngine {
 
     public static Parameters getParameters(){
         if(camera != null)
-            camera.getParameters();
+            return camera.getParameters();
         return null;
     }
 
@@ -168,6 +168,7 @@ public class CameraEngine {
     }
 
     public static boolean setFocusAndMeteringArea(List<CameraEngine.Area> focusAreas, List<CameraEngine.Area> meterAreas) {
+        camera.cancelAutoFocus();
         List<Camera.Area> camera_areas = new ArrayList<Camera.Area>();
         List<Camera.Area> meter_areas = new ArrayList<Camera.Area>();
         for(CameraEngine.Area area : focusAreas) {
@@ -179,14 +180,26 @@ public class CameraEngine {
         Camera.Parameters parameters = getParameters();
         String focus_mode = parameters.getFocusMode();
         // getFocusMode() is documented as never returning null, however I've had null pointer exceptions reported in Google Play
-        if( parameters.getMaxNumFocusAreas() != 0 && focus_mode != null && ( focus_mode.equals(Camera.Parameters.FOCUS_MODE_AUTO) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_MACRO) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE) || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO) ) ) {
-            parameters.setFocusAreas(camera_areas);
+        if( parameters.getMaxNumFocusAreas() != 0
+                && focus_mode != null
+                && ( focus_mode.equals(Camera.Parameters.FOCUS_MODE_AUTO)
+                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_MACRO)
+                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)
+                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO) ) ) {
 
+            parameters.setFocusAreas(camera_areas);
             // also set metering areas
             parameters.setMeteringAreas(meter_areas);
-
+            parameters.setFocusMode(Parameters.FOCUS_MODE_AUTO);
             setParameters(parameters);
-
+            camera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    Camera.Parameters params = camera.getParameters();
+                    //params.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                    camera.setParameters(params);
+                }
+            });
             return true;
         }
         else if( parameters.getMaxNumMeteringAreas() != 0 ) {

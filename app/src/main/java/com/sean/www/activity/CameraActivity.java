@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
+import static com.sean.www.helper.FocusHelper.FOCUS_WAITING;
+
 /**
  * Created by machenshuang on 2017/3/17.
  */
@@ -68,14 +70,16 @@ public class CameraActivity extends Activity{
     private CameraEngine.CameraClickener mListener = new CameraEngine.CameraClickener() {
         @Override
         public void startFocus() {
+            mFocusHelper.setHasFocusArea(false);
             mFocusHelper.setAutoFocus(true);
-            mFocusHelper.setFocusComplete(mFocusHelper.FOCUS_WAITING,-1);
+            mFocusHelper.setFocusComplete(FOCUS_WAITING,-1);
             mFocuOverlayView.invalidate();
         }
 
         @Override
         public void stopFocus() {
             mFocusHelper.setAutoFocus(false);
+
             mFocuOverlayView.invalidate();
         }
     } ;
@@ -153,8 +157,7 @@ public class CameraActivity extends Activity{
         findViewById(R.id.btn_camera_filter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_closefilter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_shutter).setOnClickListener(btn_listener);
-        findViewById(R.id.btn_camera_switch).setOnClickListener(btn_listener);
-        findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
+
         findViewById(R.id.btn_camera_beauty).setOnClickListener(btn_listener);
 
         //获取相机预览大小
@@ -169,6 +172,12 @@ public class CameraActivity extends Activity{
         mFocuOverlayView.setLayoutParams(params);
         mPreWidth = params.width;
         mPreHeight = params.height;
+
+        LinearLayout ll = (LinearLayout) ViewGroup.inflate(this,R.layout.camera_mode_switch,null);
+        mCameraFlayout.addView(ll);
+
+        ll.findViewById(R.id.btn_camera_switch).setOnClickListener(btn_listener);
+        ll.findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -370,12 +379,13 @@ public class CameraActivity extends Activity{
         int x = (int) event.getX();
         int y = (int) event.getY();
         mFocusHelper.setAutoFocus(true);
-        mFocusHelper.setHasFocusArea(true);
+        mFocusHelper.setHasFocusArea(false);
         ArrayList<CameraEngine.Area> focusAreas = getAreas(x, y, 1.0f);
         ArrayList<CameraEngine.Area> meterAreas = getAreas(x, y, 1.5f);
         if( CameraEngine.setFocusAndMeteringArea(focusAreas, meterAreas) ) {
             mFocusHelper.setFocusScreen(x, y);
             mFocusHelper.setHasFocusArea(true);
+            mFocusHelper.setFocusComplete(mFocusHelper.FOCUS_WAITING,-1);
             mFocuOverlayView.invalidate();
         }
         return true;

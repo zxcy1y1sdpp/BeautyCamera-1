@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_camera_model_switch"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="5dp"
+    android:background="@android:color/transparent">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_camera_mode"
+        android:src="@drawable/icon_video" />
+    <ImageView
+        android:layout_marginLeft="10dp"
+        android:layout_width="wrap_content"
+        android:id="@+id/btn_camera_switch"
+        android:layout_height="wrap_content"
+        android:src="@drawable/selector_rewardcamera"/>
+</LinearLayout>

@@ -63,7 +63,8 @@ public class FocusHelper {
     }
 
     public void setFocusScreen(int focusScreenX, int focusScreenY){
-
+        mFocusScreenX = focusScreenX;
+        mFocusScreenY = focusScreenY;
     }
 
     public void setFocusComplete(int focusSuccess, long focusCompleteTime){

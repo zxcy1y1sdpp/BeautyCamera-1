@@ -26,6 +26,11 @@ public class FocusOverlay extends View {
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        return super.dispatchTouchEvent(event);
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (mActivity != null) {
             return mActivity.touchEvent(event);
