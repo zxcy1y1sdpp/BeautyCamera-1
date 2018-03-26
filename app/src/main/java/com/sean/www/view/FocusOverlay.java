@@ -32,6 +32,9 @@ public class FocusOverlay extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_MOVE){
+            return false;
+        }
         if (mActivity != null) {
             return mActivity.touchEvent(event);
         }

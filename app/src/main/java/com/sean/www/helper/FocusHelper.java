@@ -130,6 +130,7 @@ public class FocusHelper {
 
         if (!isFocusWaiting()
                 && stayTime < MAX_STAY_TIME) {
+            canvas.drawColor(Color.TRANSPARENT);
             return false;
         }
 

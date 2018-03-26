@@ -73,7 +73,6 @@ public class CameraActivity extends Activity{
             mFocusHelper.setHasFocusArea(false);
             mFocusHelper.setAutoFocus(true);
             mFocusHelper.setFocusComplete(FOCUS_WAITING,-1);
-            mFocuOverlayView.invalidate();
         }
 
         @Override
