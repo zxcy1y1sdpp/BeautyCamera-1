@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.animation.OvershootInterpolator;
 
 import com.sean.www.utils.DimensUtil;
@@ -24,7 +25,7 @@ public class FocusHelper {
     public static final int FOCUS_WAITING_STATE_NONE = 5;
     private int mAmplitude;
     private OvershootInterpolator mInterpolator;
-    private static int MAX_STAY_TIME = 500;
+    private static int MAX_STAY_TIME = 2000;
     private static final int FOCUS_DURATION_MS = 500;
     private FocusOverlay mFocusOverlay;
     private float mScaledDensity;
@@ -41,6 +42,7 @@ public class FocusHelper {
     private boolean mIsAutoFocus = false;
     private int mFocusWaitingState;
     private long mKeepTimestamp;
+    private final static String TAG = "FocusHelper";
 
 
     public FocusHelper(Context context, FocusOverlay focusOverlay){
@@ -98,7 +100,7 @@ public class FocusHelper {
 
     public boolean isFocusWaiting(){
         if (mFocusState == FOCUS_WAITING){
-            return System.currentTimeMillis() - mFocusStartTime < 5000;
+            return System.currentTimeMillis() - mFocusStartTime < 2000;
         }
         return false;
     }
@@ -121,6 +123,7 @@ public class FocusHelper {
 
         long currentTime = System.currentTimeMillis();
         long stayTime = currentTime - mFocusStartTime;
+        //Log.d(TAG, "stayTime = " + stayTime);
 
         if (keep && mKeepTimestamp == 0){
             mKeepTimestamp = currentTime;
@@ -129,7 +132,7 @@ public class FocusHelper {
         }
 
         if (!isFocusWaiting()
-                && stayTime < MAX_STAY_TIME) {
+                && stayTime > MAX_STAY_TIME) {
             canvas.drawColor(Color.TRANSPARENT);
             return false;
         }
