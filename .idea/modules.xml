@@ -3,9 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BeautyCamera.iml" filepath="$PROJECT_DIR$/BeautyCamera.iml" />
-      <module fileurl="file://E:\Project\Android Project\MagicCamera\Project-AndroidStudio\Project-AndroidStudio.iml" filepath="E:\Project\Android Project\MagicCamera\Project-AndroidStudio\Project-AndroidStudio.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://E:\Project\Android Project\MagicCamera\Project-AndroidStudio\app\app.iml" filepath="E:\Project\Android Project\MagicCamera\Project-AndroidStudio\app\app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dlib/dlib.iml" filepath="$PROJECT_DIR$/dlib/dlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/magicfilter/magicfilter.iml" filepath="$PROJECT_DIR$/magicfilter/magicfilter.iml" />
     </modules>
   </component>
