@@ -32,6 +32,7 @@ import com.sean.www.adapter.FilterAdapter;
 import com.sean.www.MagicEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
+import com.sean.www.camera.utils.CameraUtils;
 import com.sean.www.widget.MagicCameraView;
 import com.sean.www.helper.FocusHelper;
 import com.sean.www.utils.TapAreaUtil;
@@ -380,7 +381,7 @@ public class CameraActivity extends Activity{
         mFocusHelper.setHasFocusArea(false);
         ArrayList<CameraEngine.Area> focusAreas = getAreas(x, y, 1.0f);
         ArrayList<CameraEngine.Area> meterAreas = getAreas(x, y, 1.5f);
-        if( CameraEngine.setFocusAndMeteringArea(focusAreas, meterAreas) ) {
+        if( CameraUtils.setFocusAndMeteringArea(focusAreas, meterAreas) ) {
             mFocusHelper.setFocusScreen(x, y);
             mFocusHelper.setHasFocusArea(true);
             mFocusHelper.setFocusComplete(mFocusHelper.FOCUS_WAITING,-1);

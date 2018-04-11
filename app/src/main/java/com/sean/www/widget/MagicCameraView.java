@@ -58,6 +58,8 @@ public class MagicCameraView extends MagicBaseView {
     private static final int RECORDING_ON = 1;
     private static final int RECORDING_RESUMED = 2;
 
+    private int stickerTexture = OpenGlUtils.NO_TEXTURE;
+
     //录视频使用的api
     private static TextureMovieEncoder videoEncoder = new TextureMovieEncoder();
 
@@ -161,8 +163,8 @@ public class MagicCameraView extends MagicBaseView {
             id = cameraInputFilter.onDrawToTexture(textureId);
             filter.onDrawFrame(id, gLCubeBuffer, gLTextureBuffer);
         }
-        videoEncoder.setTextureId(id);
-        videoEncoder.frameAvailable(surfaceTexture);
+        //videoEncoder.setTextureId(id);
+        //videoEncoder.frameAvailable(surfaceTexture);
     }
 
     private SurfaceTexture.OnFrameAvailableListener onFrameAvailableListener = new SurfaceTexture.OnFrameAvailableListener() {
@@ -181,7 +183,7 @@ public class MagicCameraView extends MagicBaseView {
 
     private void openCamera(){
         if(CameraEngine.getCamera() == null)
-            CameraEngine.openCamera();
+            CameraEngine.openCamera(0);
         CameraInfo info = CameraEngine.getCameraInfo();
         if(info.orientation == 90 || info.orientation == 270){
             imageWidth = info.previewHeight;

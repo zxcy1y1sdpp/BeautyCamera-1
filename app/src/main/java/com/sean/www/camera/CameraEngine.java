@@ -1,25 +1,42 @@
 package com.sean.www.camera;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Application;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ImageFormat;
+import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
-import android.view.SurfaceView;
+import android.util.Log;
 
+import com.sean.www.R;
 import com.sean.www.camera.utils.CameraUtils;
+import com.sean.www.camera.utils.FileUtils;
+import com.sean.www.camera.utils.ImageUtils;
+import com.tzutalin.dlib.Constants;
+import com.tzutalin.dlib.FaceDet;
+import com.tzutalin.dlib.VisionDetRet;
 
 public class CameraEngine {
+    private static final String TAG = "CameraEngine";
     private static Camera camera = null;
     private static int cameraID = 0;
     private static SurfaceTexture surfaceTexture;
-    private static SurfaceView surfaceView;
     private static CameraClickener mListener;
+    private static byte[] mBuffer;
+    private Bitmap mRGBBitmap = null;
+    private static FaceDet mFaceDet;
     private static Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
@@ -33,6 +50,82 @@ public class CameraEngine {
         }
     };
 
+    private static Camera.PreviewCallback mPreviewCallback = new Camera.PreviewCallback() {
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if (data == null || data.length == 0) {
+                return;
+            }
+
+            // 数据长度不符合YUV420sp格式
+            if (data.length != getCameraInfo().previewWidth * getCameraInfo().previewHeight * 1.5) {
+                Log.d(TAG, "not equals");
+                camera.addCallbackBuffer(mBuffer);
+                return;
+            }
+
+            //要重新调用，不然只会调用一次
+            camera.addCallbackBuffer(mBuffer);
+
+        }
+    };
+
+    /**
+     * 人脸识别
+     * @param data 预览当前帧的数据
+     */
+    public void doFaceDetect(byte[] data){
+
+        int previewWidth = getCameraInfo().previewWidth;
+        int previewHeight = getCameraInfo().previewHeight;
+
+
+        int[] rgbs = new int[previewWidth * previewHeight];
+
+        ImageUtils.convertYUV420SPToARGB8888(data, rgbs, previewWidth, previewHeight, false);
+
+        mRGBBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+        mRGBBitmap.setPixels(rgbs, 0, previewWidth, 0, 0, previewWidth, previewHeight);
+
+        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+            FileUtils.copyFileFromRawToOthers(R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+        }
+
+        List<VisionDetRet> results;
+        results = mFaceDet.detect(mRGBBitmap);
+
+
+        Paint mFaceLandmardkPaint = new Paint();
+        mFaceLandmardkPaint.setColor(Color.GREEN);
+        mFaceLandmardkPaint.setStrokeWidth(2);
+        mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
+        // Draw on bitmap
+        if (results != null) {
+            for (final VisionDetRet ret : results) {
+                float resizeRatio = 1.0f;
+                Rect bounds = new Rect();
+                bounds.left = (int) (ret.getLeft() * resizeRatio);
+                bounds.top = (int) (ret.getTop() * resizeRatio);
+                bounds.right = (int) (ret.getRight() * resizeRatio);
+                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+                Canvas canvas = new Canvas(mRGBBitmap);
+                canvas.drawRect(bounds, mFaceLandmardkPaint);
+
+                // Draw landmark
+                ArrayList<Point> landmarks = ret.getFaceLandmarks();
+                for (Point point : landmarks) {
+                    int pointX = (int) (point.x * resizeRatio);
+                    int pointY = (int) (point.y * resizeRatio);
+                    canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                }
+            }
+        }
+
+
+        ///mIsComputing = false;
+
+    }
+
     public static Camera getCamera(){
         return camera;
     }
@@ -42,27 +135,21 @@ public class CameraEngine {
      * 打开相机
      * @return
      */
-    public static boolean openCamera(){
-        if(camera == null){
-            try{
-                camera = Camera.open(cameraID);
-                camera.autoFocus(autoFocusCallback);
-                setDefaultParameters();
-                return true;
-            }catch(RuntimeException e){
-                return false;
-            }
-        }
-        return false;
-    }
-
     public static boolean openCamera(int id){
         if(camera == null){
             try{
                 camera = Camera.open(id);
                 cameraID = id;
                 setDefaultParameters();
+                camera.autoFocus(autoFocusCallback);
+                //因为Preview的大小是我们界面的大小，而不是返回YUV420sp的数据，所以对size要进行特殊处理
+                int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
+                size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
+                mBuffer = new byte[size];
+                camera.addCallbackBuffer(mBuffer);
+                camera.setPreviewCallbackWithBuffer(mPreviewCallback);
 
+                mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
                 return true;
             }catch(RuntimeException e){
                 return false;
@@ -73,6 +160,7 @@ public class CameraEngine {
 
     public static void releaseCamera(){
         if(camera != null){
+            mFaceDet.release();
             camera.setPreviewCallback(null);
             camera.autoFocus(null);
             camera.stopPreview();
@@ -84,7 +172,6 @@ public class CameraEngine {
 
 
     public void resumeCamera(){
-        openCamera();
     }
 
     public static void setParameters(Parameters parameters){
@@ -165,49 +252,6 @@ public class CameraEngine {
     public static void takePicture(Camera.ShutterCallback shutterCallback, Camera.PictureCallback rawCallback,
                                    Camera.PictureCallback jpegCallback){
         camera.takePicture(shutterCallback, rawCallback, jpegCallback);
-    }
-
-    public static boolean setFocusAndMeteringArea(List<CameraEngine.Area> focusAreas, List<CameraEngine.Area> meterAreas) {
-        camera.cancelAutoFocus();
-        List<Camera.Area> camera_areas = new ArrayList<Camera.Area>();
-        List<Camera.Area> meter_areas = new ArrayList<Camera.Area>();
-        for(CameraEngine.Area area : focusAreas) {
-            camera_areas.add(new Camera.Area(area.rect, area.weight));
-        }
-        for(CameraEngine.Area area : meterAreas) {
-            meter_areas.add(new Camera.Area(area.rect, area.weight));
-        }
-        Camera.Parameters parameters = getParameters();
-        String focus_mode = parameters.getFocusMode();
-        // getFocusMode() is documented as never returning null, however I've had null pointer exceptions reported in Google Play
-        if( parameters.getMaxNumFocusAreas() != 0
-                && focus_mode != null
-                && ( focus_mode.equals(Camera.Parameters.FOCUS_MODE_AUTO)
-                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_MACRO)
-                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)
-                || focus_mode.equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO) ) ) {
-
-            parameters.setFocusAreas(camera_areas);
-            // also set metering areas
-            parameters.setMeteringAreas(meter_areas);
-            parameters.setFocusMode(Parameters.FOCUS_MODE_AUTO);
-            setParameters(parameters);
-            camera.autoFocus(new Camera.AutoFocusCallback() {
-                @Override
-                public void onAutoFocus(boolean success, Camera camera) {
-                    Camera.Parameters params = camera.getParameters();
-                    //params.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                    camera.setParameters(params);
-                }
-            });
-            return true;
-        }
-        else if( parameters.getMaxNumMeteringAreas() != 0 ) {
-            parameters.setMeteringAreas(meter_areas);
-
-            setParameters(parameters);
-        }
-        return false;
     }
 
     /**
