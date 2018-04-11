@@ -1,4 +1,4 @@
-package com.sean.magicfilter.camera;
+package com.sean.www.camera;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.view.SurfaceView;
 
-import com.sean.magicfilter.camera.utils.CameraUtils;
+import com.sean.www.camera.utils.CameraUtils;
 
 public class CameraEngine {
     private static Camera camera = null;
@@ -214,8 +214,8 @@ public class CameraEngine {
      * 获取相机的配置信息
      * @return 相机配置信息
      */
-    public static com.sean.magicfilter.camera.utils.CameraInfo getCameraInfo(){
-        com.sean.magicfilter.camera.utils.CameraInfo info = new com.sean.magicfilter.camera.utils.CameraInfo();
+    public static com.sean.www.camera.utils.CameraInfo getCameraInfo(){
+        com.sean.www.camera.utils.CameraInfo info = new com.sean.www.camera.utils.CameraInfo();
         Size size = getPreviewSize();
         CameraInfo cameraInfo = new CameraInfo();
         Camera.getCameraInfo(cameraID, cameraInfo);

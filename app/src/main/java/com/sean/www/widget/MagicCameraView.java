@@ -1,4 +1,4 @@
-package com.sean.magicfilter.widget;
+package com.sean.www.widget;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -10,8 +10,8 @@ import android.opengl.GLES20;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 
-import com.sean.magicfilter.camera.CameraEngine;
-import com.sean.magicfilter.camera.utils.CameraInfo;
+import com.sean.www.camera.CameraEngine;
+import com.sean.www.camera.utils.CameraInfo;
 import com.sean.magicfilter.encoder.video.TextureMovieEncoder;
 import com.sean.magicfilter.filter.advanced.MagicBeautyFilter;
 import com.sean.magicfilter.filter.base.MagicCameraInputFilter;
@@ -120,10 +120,10 @@ public class MagicCameraView extends MagicBaseView {
                     videoEncoder.setPreviewSize(info.previewWidth, info.pictureHeight);
                     videoEncoder.setTextureBuffer(gLTextureBuffer);
                     videoEncoder.setCubeBuffer(gLCubeBuffer);
-                    videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
+                    /*videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
                             outputFile, info.previewWidth, info.pictureHeight,
                             1000000, EGL14.eglGetCurrentContext(),
-                            info));
+                            info));*/
                     recordingStatus = RECORDING_ON;
                     break;
                 case RECORDING_RESUMED:

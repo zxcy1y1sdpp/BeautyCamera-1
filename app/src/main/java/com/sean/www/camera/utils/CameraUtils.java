@@ -1,4 +1,4 @@
-package com.sean.magicfilter.camera.utils;
+package com.sean.www.camera.utils;
 
 import android.hardware.Camera;
 

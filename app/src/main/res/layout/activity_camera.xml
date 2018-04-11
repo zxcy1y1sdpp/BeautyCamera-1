@@ -7,7 +7,7 @@
         android:id="@+id/fl_camera"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <com.sean.magicfilter.widget.MagicCameraView
+        <com.sean.www.widget.MagicCameraView
             android:id="@+id/glsurfaceview_camera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

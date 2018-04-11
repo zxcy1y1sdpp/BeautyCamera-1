@@ -22,13 +22,13 @@ import java.lang.ref.WeakReference;
 import java.nio.FloatBuffer;
 
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.opengl.EGLContext;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-import com.sean.magicfilter.camera.utils.CameraInfo;
 import com.sean.magicfilter.filter.base.MagicCameraInputFilter;
 import com.sean.magicfilter.filter.base.gpuimage.GPUImageFilter;
 import com.sean.magicfilter.filter.helper.MagicFilterFactory;
@@ -111,7 +111,7 @@ public class TextureMovieEncoder implements Runnable {
         final EGLContext mEglContext;
 
         public EncoderConfig(File outputFile, int width, int height, int bitRate,
-                EGLContext sharedEglContext, CameraInfo info) {
+                EGLContext sharedEglContext, Camera.CameraInfo info) {
             mOutputFile = outputFile;
             mWidth = width;
             mHeight = height;

@@ -26,14 +26,13 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.sean.magicfilter.camera.CameraEngine;
-import com.sean.magicfilter.camera.utils.CameraInfo;
+import com.sean.www.camera.CameraEngine;
 import com.sean.www.R;
 import com.sean.www.adapter.FilterAdapter;
-import com.sean.magicfilter.MagicEngine;
+import com.sean.www.MagicEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
-import com.sean.magicfilter.widget.MagicCameraView;
+import com.sean.www.widget.MagicCameraView;
 import com.sean.www.helper.FocusHelper;
 import com.sean.www.utils.TapAreaUtil;
 import com.sean.www.view.FocusOverlay;

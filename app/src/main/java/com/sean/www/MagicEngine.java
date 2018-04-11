@@ -1,13 +1,13 @@
-package com.sean.magicfilter;
+package com.sean.www;
 
 import android.util.Log;
 
-import com.sean.magicfilter.camera.CameraEngine;
+import com.sean.www.camera.CameraEngine;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
 import com.sean.magicfilter.utils.MagicParams;
 import com.sean.magicfilter.helper.SavePictureTask;
 import com.sean.magicfilter.widget.base.MagicBaseView;
-import com.sean.magicfilter.widget.MagicCameraView;
+import com.sean.www.widget.MagicCameraView;
 
 import java.io.File;
 
