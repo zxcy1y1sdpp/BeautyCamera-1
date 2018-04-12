@@ -7,6 +7,8 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 
@@ -24,10 +26,12 @@ import com.sean.magicfilter.utils.TextureRotationUtil;
 import com.sean.magicfilter.widget.base.MagicBaseView;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.WeakHashMap;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -58,14 +62,14 @@ public class MagicCameraView extends MagicBaseView {
     private static final int RECORDING_ON = 1;
     private static final int RECORDING_RESUMED = 2;
 
-    private int stickerTexture = OpenGlUtils.NO_TEXTURE;
+    private static final int MESSAGE_AR_STICKER = 4;
 
     //录视频使用的api
     private static TextureMovieEncoder videoEncoder = new TextureMovieEncoder();
 
     private File outputFile;
 
-
+    private static MyHandler mHandler;
 
     public MagicCameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -74,6 +78,8 @@ public class MagicCameraView extends MagicBaseView {
         recordingStatus = -1;
         recordingEnabled = false;
         scaleType = ScaleType.CENTER_CROP;
+        mHandler = new MyHandler(this);
+        CameraEngine.setHandler(mHandler);
     }
 
     @Override
@@ -158,7 +164,7 @@ public class MagicCameraView extends MagicBaseView {
         cameraInputFilter.setTextureTransformMatrix(mtx);
         int id = textureId;
         if(filter == null){
-            cameraInputFilter.onDrawFrame(textureId, gLCubeBuffer, gLTextureBuffer);
+            cameraInputFilter.onDrawFrame(CameraEngine.mTexture,gLCubeBuffer, gLTextureBuffer);
         }else{
             id = cameraInputFilter.onDrawToTexture(textureId);
             filter.onDrawFrame(id, gLCubeBuffer, gLTextureBuffer);
@@ -325,5 +331,27 @@ public class MagicCameraView extends MagicBaseView {
 
     public void onBeautyLevelChanged() {
         cameraInputFilter.onBeautyLevelChanged();
+    }
+
+    /**
+     * 这个handler
+     */
+    public static class MyHandler extends Handler{
+        private WeakReference<MagicCameraView> mView;
+        public MyHandler(MagicCameraView view){
+            mView = new WeakReference<>(view);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            MagicCameraView view = mView.get();
+            if (null != view){
+                switch (msg.what){
+                    case MESSAGE_AR_STICKER:
+                        view.requestRender();
+                }
+            }
+        }
     }
 }

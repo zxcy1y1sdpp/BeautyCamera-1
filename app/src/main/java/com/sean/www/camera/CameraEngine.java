@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Application;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -20,13 +19,16 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.util.Log;
 
+import com.sean.magicfilter.utils.OpenGlUtils;
 import com.sean.www.R;
 import com.sean.www.camera.utils.CameraUtils;
 import com.sean.www.camera.utils.FileUtils;
-import com.sean.www.camera.utils.ImageUtils;
+import com.sean.www.widget.MagicCameraView;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
+
+import static com.tzutalin.dlibtest.ImageUtils.convertYUV420SPToARGB8888;
 
 public class CameraEngine {
     private static final String TAG = "CameraEngine";
@@ -35,8 +37,10 @@ public class CameraEngine {
     private static SurfaceTexture surfaceTexture;
     private static CameraClickener mListener;
     private static byte[] mBuffer;
-    private Bitmap mRGBBitmap = null;
+    private static Bitmap mRGBBitmap = null;
+    public static int mTexture = OpenGlUtils.NO_TEXTURE;
     private static FaceDet mFaceDet;
+    private static MagicCameraView.MyHandler mHandler = null;
     private static Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
@@ -66,7 +70,7 @@ public class CameraEngine {
 
             //要重新调用，不然只会调用一次
             camera.addCallbackBuffer(mBuffer);
-
+            doFaceDetect(data);
         }
     };
 
@@ -74,7 +78,7 @@ public class CameraEngine {
      * 人脸识别
      * @param data 预览当前帧的数据
      */
-    public void doFaceDetect(byte[] data){
+    public static void doFaceDetect(byte[] data){
 
         int previewWidth = getCameraInfo().previewWidth;
         int previewHeight = getCameraInfo().previewHeight;
@@ -82,46 +86,63 @@ public class CameraEngine {
 
         int[] rgbs = new int[previewWidth * previewHeight];
 
-        ImageUtils.convertYUV420SPToARGB8888(data, rgbs, previewWidth, previewHeight, false);
+        convertYUV420SPToARGB8888(data, rgbs, previewWidth, previewHeight, false);
 
-        mRGBBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+        if (null == mRGBBitmap){
+            mRGBBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+        }
+        Log.d(TAG, previewWidth + "," + previewHeight);
+        Log.d(TAG, mRGBBitmap.getRowBytes() * previewHeight + "");
         mRGBBitmap.setPixels(rgbs, 0, previewWidth, 0, 0, previewWidth, previewHeight);
 
-        if (!new File(Constants.getFaceShapeModelPath()).exists()) {
-            FileUtils.copyFileFromRawToOthers(R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
-        }
-
-        List<VisionDetRet> results;
-        results = mFaceDet.detect(mRGBBitmap);
 
 
-        Paint mFaceLandmardkPaint = new Paint();
-        mFaceLandmardkPaint.setColor(Color.GREEN);
-        mFaceLandmardkPaint.setStrokeWidth(2);
-        mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
-        // Draw on bitmap
-        if (results != null) {
-            for (final VisionDetRet ret : results) {
-                float resizeRatio = 1.0f;
-                Rect bounds = new Rect();
-                bounds.left = (int) (ret.getLeft() * resizeRatio);
-                bounds.top = (int) (ret.getTop() * resizeRatio);
-                bounds.right = (int) (ret.getRight() * resizeRatio);
-                bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-                Canvas canvas = new Canvas(mRGBBitmap);
-                canvas.drawRect(bounds, mFaceLandmardkPaint);
+        if (null != mHandler){
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!new File(Constants.getFaceShapeModelPath()).exists()) {
+                        FileUtils.copyFileFromRawToOthers(R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
+                    }
 
-                // Draw landmark
-                ArrayList<Point> landmarks = ret.getFaceLandmarks();
-                for (Point point : landmarks) {
-                    int pointX = (int) (point.x * resizeRatio);
-                    int pointY = (int) (point.y * resizeRatio);
-                    canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                    List<VisionDetRet> results;
+                    results = mFaceDet.detect(mRGBBitmap);
+
+
+                    Paint mFaceLandmardkPaint = new Paint();
+                    mFaceLandmardkPaint.setColor(Color.GREEN);
+                    mFaceLandmardkPaint.setStrokeWidth(2);
+                    mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
+                    // Draw on bitmap
+                    if (results != null) {
+                        for (final VisionDetRet ret : results) {
+                            float resizeRatio = 1.0f;
+                            Rect bounds = new Rect();
+                            bounds.left = (int) (ret.getLeft() * resizeRatio);
+                            bounds.top = (int) (ret.getTop() * resizeRatio);
+                            bounds.right = (int) (ret.getRight() * resizeRatio);
+                            bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+                            Canvas canvas = new Canvas(mRGBBitmap);
+                            canvas.drawRect(bounds, mFaceLandmardkPaint);
+
+                            // Draw landmark
+                            ArrayList<Point> landmarks = ret.getFaceLandmarks();
+                            for (Point point : landmarks) {
+                                int pointX = (int) (point.x * resizeRatio);
+                                int pointY = (int) (point.y * resizeRatio);
+                                canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
+                            }
+                        }
+                    }
+
+                    if (null != mRGBBitmap){
+                        mTexture = OpenGlUtils.loadTexture(mRGBBitmap, mTexture);
+                    }
+
+                    mHandler.sendEmptyMessage(4);
                 }
-            }
+            }).start();
         }
-
-
         ///mIsComputing = false;
 
     }
@@ -271,6 +292,13 @@ public class CameraEngine {
         info.pictureWidth = size.width;
         info.pictureHeight = size.height;
         return info;
+    }
+
+    public static void setHandler(MagicCameraView.MyHandler handler){
+
+        if (null == mHandler){
+            mHandler = handler;
+        }
     }
 
     public static void setCameraClistener(CameraClickener listener){

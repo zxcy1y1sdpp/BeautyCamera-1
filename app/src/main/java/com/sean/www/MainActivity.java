@@ -7,11 +7,16 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
+import android.util.Log;
 import android.view.View;
 
 import com.sean.www.activity.CameraActivity;
+import com.tzutalin.dlib.FaceDet;
 
 public class MainActivity extends Activity {
+
+    private static final String TAG = "MainActivity";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

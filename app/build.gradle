@@ -20,6 +20,8 @@ model {
             proguardFiles.add(file('proguard-rules.txt'))
         }
     }
+
+
 }
 
 dependencies {
