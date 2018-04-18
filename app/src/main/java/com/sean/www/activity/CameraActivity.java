@@ -151,7 +151,7 @@ public class CameraActivity extends Activity{
         mCameraFlayout = findViewById(R.id.fl_camera);
 
         btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
-        btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
+        //btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
 
         findViewById(R.id.btn_camera_filter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_closefilter).setOnClickListener(btn_listener);
@@ -176,7 +176,7 @@ public class CameraActivity extends Activity{
         mCameraFlayout.addView(ll);
 
         ll.findViewById(R.id.btn_camera_switch).setOnClickListener(btn_listener);
-        ll.findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
+        //ll.findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -220,9 +220,9 @@ public class CameraActivity extends Activity{
         @Override
         public void onClick(View v) {
             switch (v.getId()){
-                case R.id.btn_camera_mode:
+                /*case R.id.btn_camera_mode:
                     switchMode();
-                    break;
+                    break;*/
                 case R.id.btn_camera_shutter:
                     if (PermissionChecker.checkSelfPermission(CameraActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             == PackageManager.PERMISSION_DENIED) {
