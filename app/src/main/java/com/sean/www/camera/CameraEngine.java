@@ -70,7 +70,7 @@ public class CameraEngine {
 
             //要重新调用，不然只会调用一次
             camera.addCallbackBuffer(mBuffer);
-            doFaceDetect(data);
+            //doFaceDetect(data);
         }
     };
 
@@ -164,13 +164,13 @@ public class CameraEngine {
                 setDefaultParameters();
                 camera.autoFocus(autoFocusCallback);
                 //因为Preview的大小是我们界面的大小，而不是返回YUV420sp的数据，所以对size要进行特殊处理
-                int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
-                size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
-                mBuffer = new byte[size];
-                camera.addCallbackBuffer(mBuffer);
-                camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+                //int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
+                //size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
+                //mBuffer = new byte[size];
+                //camera.addCallbackBuffer(mBuffer);
+                //camera.setPreviewCallbackWithBuffer(mPreviewCallback);
 
-                mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+                //mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
                 return true;
             }catch(RuntimeException e){
                 return false;
@@ -181,7 +181,7 @@ public class CameraEngine {
 
     public static void releaseCamera(){
         if(camera != null){
-            mFaceDet.release();
+            //mFaceDet.release();
             camera.setPreviewCallback(null);
             camera.autoFocus(null);
             camera.stopPreview();

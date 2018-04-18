@@ -164,7 +164,7 @@ public class MagicCameraView extends MagicBaseView {
         cameraInputFilter.setTextureTransformMatrix(mtx);
         int id = textureId;
         if(filter == null){
-            cameraInputFilter.onDrawFrame(CameraEngine.mTexture,gLCubeBuffer, gLTextureBuffer);
+            cameraInputFilter.onDrawFrame(textureId,gLCubeBuffer, gLTextureBuffer);
         }else{
             id = cameraInputFilter.onDrawToTexture(textureId);
             filter.onDrawFrame(id, gLCubeBuffer, gLTextureBuffer);
