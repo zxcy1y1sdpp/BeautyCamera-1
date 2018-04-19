@@ -15,6 +15,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,6 +41,7 @@ import com.sean.www.utils.TapAreaUtil;
 import com.sean.www.view.FocusOverlay;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,6 +68,8 @@ public class CameraActivity extends Activity{
     private Matrix previewToCameraMatrix = new Matrix();
     private int mPreWidth;
     private int mPreHeight;
+
+    private ImageView mFaceMarkIv;
 
 
     private CameraEngine.CameraClickener mListener = new CameraEngine.CameraClickener() {
@@ -149,6 +154,7 @@ public class CameraActivity extends Activity{
         mFilterListView = (RecyclerView) findViewById(R.id.filter_listView);
         mCameraFlayout = findViewById(R.id.fl_camera);
 
+        mFaceMarkIv = findViewById(R.id.iv_face_mark);
         btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
         mArStickerIv = findViewById(R.id.iv_camera_ar_sticker);
 
@@ -429,8 +435,28 @@ public class CameraActivity extends Activity{
         cameraToPreviewMatrix.postScale(width / 2000f, height / 2000f);
         cameraToPreviewMatrix.postTranslate(width / 2f, height / 2f);
 
-        if(!cameraToPreviewMatrix.invert(previewToCameraMatrix) ) {
 
+    }
+
+    /**
+     * 这个handler
+     */
+    public static class MyHandler extends Handler {
+        private WeakReference<CameraActivity> mContext;
+        public MyHandler(CameraActivity context){
+            mContext = new WeakReference<>(context);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            CameraActivity activity = mContext.get();
+            if (null != activity){
+                switch (msg.what){
+                    case 4:
+
+                }
+            }
         }
     }
 }
