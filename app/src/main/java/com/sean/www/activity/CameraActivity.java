@@ -15,6 +15,8 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.widget.LinearLayoutManager;
@@ -39,6 +41,7 @@ import com.sean.www.utils.TapAreaUtil;
 import com.sean.www.view.FocusOverlay;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -66,6 +69,8 @@ public class CameraActivity extends Activity{
     private int mPreWidth;
     private int mPreHeight;
 
+    private ImageView mFaceMarkIv;
+
 
     private CameraEngine.CameraClickener mListener = new CameraEngine.CameraClickener() {
         @Override
@@ -84,8 +89,7 @@ public class CameraActivity extends Activity{
     } ;
 
     private ImageView btn_shutter;
-    private ImageView btn_mode;
-
+    private ImageView mArStickerIv;
     private ObjectAnimator animator;
 
     private final MagicFilterType[] types = new MagicFilterType[]{
@@ -150,13 +154,14 @@ public class CameraActivity extends Activity{
         mFilterListView = (RecyclerView) findViewById(R.id.filter_listView);
         mCameraFlayout = findViewById(R.id.fl_camera);
 
+        mFaceMarkIv = findViewById(R.id.iv_face_mark);
         btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
-        btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
+        mArStickerIv = findViewById(R.id.iv_camera_ar_sticker);
 
         findViewById(R.id.btn_camera_filter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_closefilter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_shutter).setOnClickListener(btn_listener);
-
+        mArStickerIv.setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_beauty).setOnClickListener(btn_listener);
 
         //获取相机预览大小
@@ -176,7 +181,7 @@ public class CameraActivity extends Activity{
         mCameraFlayout.addView(ll);
 
         ll.findViewById(R.id.btn_camera_switch).setOnClickListener(btn_listener);
-        ll.findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
+        //ll.findViewById(R.id.btn_camera_mode).setOnClickListener(btn_listener);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -220,9 +225,9 @@ public class CameraActivity extends Activity{
         @Override
         public void onClick(View v) {
             switch (v.getId()){
-                case R.id.btn_camera_mode:
+                /*case R.id.btn_camera_mode:
                     switchMode();
-                    break;
+                    break;*/
                 case R.id.btn_camera_shutter:
                     if (PermissionChecker.checkSelfPermission(CameraActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             == PackageManager.PERMISSION_DENIED) {
@@ -256,17 +261,27 @@ public class CameraActivity extends Activity{
                 case R.id.btn_camera_closefilter:
                     hideFilters();
                     break;
+                case R.id.iv_camera_ar_sticker:
+
+                    showArSticker();
+                    break;
             }
         }
     };
 
+    /**
+     * 展示Ar贴纸画板
+     */
+    private void showArSticker() {
+    }
+
     private void switchMode(){
         if(mode == MODE_PIC){
             mode = MODE_VIDEO;
-            btn_mode.setImageResource(R.drawable.icon_camera);
+            //btn_mode.setImageResource(R.drawable.icon_camera);
         }else{
             mode = MODE_PIC;
-            btn_mode.setImageResource(R.drawable.icon_video);
+            //btn_mode.setImageResource(R.drawable.icon_video);
         }
     }
 
@@ -420,8 +435,28 @@ public class CameraActivity extends Activity{
         cameraToPreviewMatrix.postScale(width / 2000f, height / 2000f);
         cameraToPreviewMatrix.postTranslate(width / 2f, height / 2f);
 
-        if(!cameraToPreviewMatrix.invert(previewToCameraMatrix) ) {
 
+    }
+
+    /**
+     * 这个handler
+     */
+    public static class MyHandler extends Handler {
+        private WeakReference<CameraActivity> mContext;
+        public MyHandler(CameraActivity context){
+            mContext = new WeakReference<>(context);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            CameraActivity activity = mContext.get();
+            if (null != activity){
+                switch (msg.what){
+                    case 4:
+
+                }
+            }
         }
     }
 }

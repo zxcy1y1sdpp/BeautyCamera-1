@@ -11,6 +11,10 @@
             android:id="@+id/glsurfaceview_camera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+        <ImageView
+            android:id="@+id/iv_face_mark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </FrameLayout>
 
     <FrameLayout
@@ -41,6 +45,13 @@
                 android:layout_weight="1.0"
                 android:src="@drawable/btn_camera_shutter"/>
 
+            <ImageView
+                android:id="@+id/iv_camera_ar_sticker"
+                android:layout_width="0dip"
+                android:layout_height="match_parent"
+                android:layout_weight="1.0"
+                android:scaleType="centerInside"
+                android:src="@drawable/activity_camera_iv_ar_sticker_bg"/>
             <ImageView
                 android:id="@+id/btn_camera_filter"
                 android:layout_width="0dip"

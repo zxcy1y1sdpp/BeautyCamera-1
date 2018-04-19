@@ -9,6 +9,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -19,11 +20,10 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.util.Log;
 
-import com.sean.magicfilter.utils.OpenGlUtils;
 import com.sean.www.R;
+import com.sean.www.activity.CameraActivity;
 import com.sean.www.camera.utils.CameraUtils;
 import com.sean.www.camera.utils.FileUtils;
-import com.sean.www.widget.MagicCameraView;
 import com.tzutalin.dlib.Constants;
 import com.tzutalin.dlib.FaceDet;
 import com.tzutalin.dlib.VisionDetRet;
@@ -36,11 +36,16 @@ public class CameraEngine {
     private static int cameraID = 0;
     private static SurfaceTexture surfaceTexture;
     private static CameraClickener mListener;
+    private static final int INPUT_SIZE = 128;
     private static byte[] mBuffer;
     private static Bitmap mRGBBitmap = null;
-    public static int mTexture = OpenGlUtils.NO_TEXTURE;
+    private static Bitmap mRotateBitmap = null;
+    private static Bitmap mCroppedBitmap = null;
     private static FaceDet mFaceDet;
-    private static MagicCameraView.MyHandler mHandler = null;
+    private static boolean mUseArSticker;
+    private static Paint mFaceLandmardkPaint;
+    private static volatile boolean mhasFaceDet;
+    private static CameraActivity.MyHandler mHandler = null;
     private static Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
         public void onAutoFocus(boolean success, Camera camera) {
@@ -58,6 +63,7 @@ public class CameraEngine {
         @Override
         public void onPreviewFrame(byte[] data, Camera camera) {
             if (data == null || data.length == 0) {
+                Log.d(TAG, "date null");
                 return;
             }
 
@@ -68,11 +74,20 @@ public class CameraEngine {
                 return;
             }
 
+
             //要重新调用，不然只会调用一次
             camera.addCallbackBuffer(mBuffer);
-            //doFaceDetect(data);
+            doFaceDetect(data);
         }
     };
+
+    /**
+     * 设置是否启动ar贴纸的标志
+     * @param flag boolean
+     */
+    public void setUseArSticker(boolean flag){
+        mUseArSticker = flag;
+    }
 
     /**
      * 人脸识别
@@ -91,11 +106,25 @@ public class CameraEngine {
         if (null == mRGBBitmap){
             mRGBBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
         }
-        Log.d(TAG, previewWidth + "," + previewHeight);
-        Log.d(TAG, mRGBBitmap.getRowBytes() * previewHeight + "");
+        //Log.d(TAG, previewWidth + "," + previewHeight);
+        //Log.d(TAG, mRGBBitmap.getRowBytes() * previewHeight + "");
         mRGBBitmap.setPixels(rgbs, 0, previewWidth, 0, 0, previewWidth, previewHeight);
 
+        Matrix mtx = new Matrix();
+        mtx.preScale(-1.0f, 1.0f);
+        mtx.postRotate(90.0f);
+        if (null == mRotateBitmap){
+            mRGBBitmap = Bitmap.createBitmap(mRGBBitmap.getWidth(), mRGBBitmap.getHeight(),
+                    Bitmap.Config.ARGB_8888);
+        }
 
+        if (null == mCroppedBitmap){
+            float ratio = (float) mRGBBitmap.getWidth() / mRGBBitmap.getHeight();
+            mCroppedBitmap = Bitmap.createBitmap(INPUT_SIZE, (int) (INPUT_SIZE * ratio),
+                    Bitmap.Config.ARGB_8888);
+        }
+
+        drawResizedBitmap(mRotateBitmap, mCroppedBitmap);
 
         if (null != mHandler){
             new Thread(new Runnable() {
@@ -105,17 +134,18 @@ public class CameraEngine {
                         FileUtils.copyFileFromRawToOthers(R.raw.shape_predictor_68_face_landmarks, Constants.getFaceShapeModelPath());
                     }
 
-                    List<VisionDetRet> results;
-                    results = mFaceDet.detect(mRGBBitmap);
+                    List<VisionDetRet> results = null;
+
+                    if (mhasFaceDet){
+                        results = mFaceDet.detect(mCroppedBitmap);
+                        //Log.d(TAG, results.toString());
+                    }
 
 
-                    Paint mFaceLandmardkPaint = new Paint();
-                    mFaceLandmardkPaint.setColor(Color.GREEN);
-                    mFaceLandmardkPaint.setStrokeWidth(2);
-                    mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
                     // Draw on bitmap
                     if (results != null) {
                         for (final VisionDetRet ret : results) {
+                            Log.d(TAG, ret.toString());
                             float resizeRatio = 1.0f;
                             Rect bounds = new Rect();
                             bounds.left = (int) (ret.getLeft() * resizeRatio);
@@ -135,9 +165,6 @@ public class CameraEngine {
                         }
                     }
 
-                    if (null != mRGBBitmap){
-                        mTexture = OpenGlUtils.loadTexture(mRGBBitmap, mTexture);
-                    }
 
                     mHandler.sendEmptyMessage(4);
                 }
@@ -151,6 +178,48 @@ public class CameraEngine {
         return camera;
     }
 
+    private static void drawResizedBitmap(final Bitmap src, final Bitmap dst) {
+        final Matrix matrix = new Matrix();
+
+        final float scaleFactorW = (float) dst.getWidth() / src.getWidth();
+        final float scaleFactorH = (float) dst.getHeight() / src.getHeight();
+        matrix.postScale(scaleFactorW, scaleFactorH);
+
+        final Canvas canvas = new Canvas(dst);
+        canvas.drawBitmap(src, matrix, null);
+    }
+
+
+    /*private static void drawLandMark(VisionDetRet ret) {
+        Log.d(TAG, ret.toString());
+        float resizeRatio = 1.0f;
+        //float resizeRatio = 2.5f;    // 预览尺寸 480x320  /  截取尺寸 192x128  (另外悬浮窗尺寸是 810x540)
+        Rect bounds = new Rect();
+        bounds.left = (int) (ret.getLeft() * resizeRatio);
+        bounds.top = (int) (ret.getTop() * resizeRatio);
+        bounds.right = (int) (ret.getRight() * resizeRatio);
+        bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+
+        if (previewSize != null) {
+            final Bitmap mBitmap = Bitmap.createBitmap(previewSize.getHeight(), previewSize.getWidth(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(mBitmap);
+            canvas.drawRect(bounds, mFaceLandmarkPaint);
+
+            final ArrayList<Point> landmarks = ret.getFaceLandmarks();
+            for (Point point : landmarks) {
+                int pointX = (int) (point.x * resizeRatio);
+                int pointY = (int) (point.y * resizeRatio);
+                canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
+            }
+
+            mUIHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    ivDraw.setImageBitmap(mBitmap);
+                }
+            });
+        }
+    }*/
 
     /**
      * 打开相机
@@ -163,14 +232,28 @@ public class CameraEngine {
                 cameraID = id;
                 setDefaultParameters();
                 camera.autoFocus(autoFocusCallback);
-                //因为Preview的大小是我们界面的大小，而不是返回YUV420sp的数据，所以对size要进行特殊处理
-                //int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
-                //size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
-                //mBuffer = new byte[size];
-                //camera.addCallbackBuffer(mBuffer);
-                //camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+                if (cameraID == 1){
+                    int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
+                    size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
+                    mBuffer = new byte[size];
+                    camera.addCallbackBuffer(mBuffer);
+                    camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
 
-                //mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+                            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+
+                            mFaceLandmardkPaint = new Paint();
+                            mFaceLandmardkPaint.setColor(Color.WHITE);
+                            mFaceLandmardkPaint.setStrokeWidth(2);
+                            mFaceLandmardkPaint.setStyle(Paint.Style.STROKE);
+                            mhasFaceDet = true;
+                        }
+                    }).start();
+                } else {
+                    camera.setPreviewCallbackWithBuffer(null);
+                }
                 return true;
             }catch(RuntimeException e){
                 return false;
@@ -180,8 +263,24 @@ public class CameraEngine {
     }
 
     public static void releaseCamera(){
-        if(camera != null){
-            //mFaceDet.release();
+        if(null != camera){
+            if (null != mFaceDet){
+                mhasFaceDet = false;
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mFaceDet.release();
+                        mFaceDet = null;
+                        mRGBBitmap.recycle();
+                        mRotateBitmap.recycle();
+                        mCroppedBitmap.recycle();
+                        mRGBBitmap = null;
+                        mRotateBitmap = null;
+                        mCroppedBitmap = null;
+                    }
+                }).start();
+
+            }
             camera.setPreviewCallback(null);
             camera.autoFocus(null);
             camera.stopPreview();
@@ -252,7 +351,9 @@ public class CameraEngine {
         if(camera != null)
             camera.startPreview();
         if (mListener!=null){
-            mListener.startFocus();
+            if (cameraID == 0){
+                mListener.startFocus();
+            }
         }
 
     }
@@ -294,7 +395,7 @@ public class CameraEngine {
         return info;
     }
 
-    public static void setHandler(MagicCameraView.MyHandler handler){
+    public static void setHandler(CameraActivity.MyHandler handler){
 
         if (null == mHandler){
             mHandler = handler;

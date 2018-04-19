@@ -5,16 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
-import android.opengl.EGL14;
 import android.opengl.GLES20;
-import android.os.Handler;
-import android.os.Message;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 
+import com.sean.www.activity.CameraActivity;
 import com.sean.www.camera.CameraEngine;
 import com.sean.www.camera.utils.CameraInfo;
-import com.sean.magicfilter.encoder.video.TextureMovieEncoder;
 import com.sean.magicfilter.filter.advanced.MagicBeautyFilter;
 import com.sean.magicfilter.filter.base.MagicCameraInputFilter;
 import com.sean.magicfilter.filter.helper.MagicFilterType;
@@ -26,12 +23,10 @@ import com.sean.magicfilter.utils.TextureRotationUtil;
 import com.sean.magicfilter.widget.base.MagicBaseView;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.WeakHashMap;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -55,8 +50,8 @@ public class MagicCameraView extends MagicBaseView {
         this(context, null);
     }
 
-    private boolean recordingEnabled;
-    private int recordingStatus;
+    //private boolean recordingEnabled;
+    //private int recordingStatus;
 
     private static final int RECORDING_OFF = 0;
     private static final int RECORDING_ON = 1;
@@ -65,33 +60,30 @@ public class MagicCameraView extends MagicBaseView {
     private static final int MESSAGE_AR_STICKER = 4;
 
     //录视频使用的api
-    private static TextureMovieEncoder videoEncoder = new TextureMovieEncoder();
+    //private static TextureMovieEncoder videoEncoder = new TextureMovieEncoder();
 
     private File outputFile;
 
-    private static MyHandler mHandler;
 
     public MagicCameraView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.getHolder().addCallback(this);
         outputFile = new File(MagicParams.videoPath,MagicParams.videoName);
-        recordingStatus = -1;
-        recordingEnabled = false;
+        //recordingStatus = -1;
+        //recordingEnabled = false;
         scaleType = ScaleType.CENTER_CROP;
-        mHandler = new MyHandler(this);
-        CameraEngine.setHandler(mHandler);
     }
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         super.onSurfaceCreated(gl, config);
 
-        //是否正在录制
+        /*//是否正在录制
         recordingEnabled = videoEncoder.isRecording();
         if (recordingEnabled)
             recordingStatus = RECORDING_RESUMED;
         else
-            recordingStatus = RECORDING_OFF;
+            recordingStatus = RECORDING_OFF;*/
 
         //创建一个滤镜输入层
         if(cameraInputFilter == null)
@@ -121,17 +113,17 @@ public class MagicCameraView extends MagicBaseView {
             return;
         //从surfaceTexture中获取图像流,并且更新到纹理单元里，它将隐含地将其纹理绑定到GL_TEXTURE_EXTERNAL_OES纹理目标
         surfaceTexture.updateTexImage();
-        if (recordingEnabled) {
+        /*if (recordingEnabled) {
             switch (recordingStatus) {
                 case RECORDING_OFF:
                     CameraInfo info = CameraEngine.getCameraInfo();
                     videoEncoder.setPreviewSize(info.previewWidth, info.pictureHeight);
                     videoEncoder.setTextureBuffer(gLTextureBuffer);
                     videoEncoder.setCubeBuffer(gLCubeBuffer);
-                    /*videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
+                    *//*videoEncoder.startRecording(new TextureMovieEncoder.EncoderConfig(
                             outputFile, info.previewWidth, info.pictureHeight,
                             1000000, EGL14.eglGetCurrentContext(),
-                            info));*/
+                            info));*//*
                     recordingStatus = RECORDING_ON;
                     break;
                 case RECORDING_RESUMED:
@@ -155,7 +147,7 @@ public class MagicCameraView extends MagicBaseView {
                 default:
                     throw new RuntimeException("unknown status " + recordingStatus);
             }
-        }
+        }*/
         float[] mtx = new float[16];
 
         surfaceTexture.getTransformMatrix(mtx);
@@ -184,7 +176,7 @@ public class MagicCameraView extends MagicBaseView {
     @Override
     public void setFilter(MagicFilterType type) {
         super.setFilter(type);
-        videoEncoder.setFilter(type);
+        //videoEncoder.setFilter(type);
     }
 
     private void openCamera(){
@@ -212,7 +204,7 @@ public class MagicCameraView extends MagicBaseView {
     }
 
     public void changeRecordingState(boolean isRecording) {
-        recordingEnabled = isRecording;
+       // recordingEnabled = isRecording;
     }
 
     protected void onFilterChanged(){
@@ -333,25 +325,4 @@ public class MagicCameraView extends MagicBaseView {
         cameraInputFilter.onBeautyLevelChanged();
     }
 
-    /**
-     * 这个handler
-     */
-    public static class MyHandler extends Handler{
-        private WeakReference<MagicCameraView> mView;
-        public MyHandler(MagicCameraView view){
-            mView = new WeakReference<>(view);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            MagicCameraView view = mView.get();
-            if (null != view){
-                switch (msg.what){
-                    case MESSAGE_AR_STICKER:
-                        view.requestRender();
-                }
-            }
-        }
-    }
 }
