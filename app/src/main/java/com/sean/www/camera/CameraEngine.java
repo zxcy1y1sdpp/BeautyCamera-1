@@ -41,6 +41,7 @@ public class CameraEngine {
     private static Bitmap mRGBBitmap = null;
     private static Bitmap mRotateBitmap = null;
     private static Bitmap mCroppedBitmap = null;
+    public static Bitmap mFaceBitmap = null;
     private static FaceDet mFaceDet;
     private static boolean mUseArSticker;
     private static Paint mFaceLandmardkPaint;
@@ -77,7 +78,10 @@ public class CameraEngine {
 
             //要重新调用，不然只会调用一次
             camera.addCallbackBuffer(mBuffer);
-            doFaceDetect(data);
+            if (mhasFaceDet){
+                doFaceDetect(data);
+            }
+
         }
     };
 
@@ -94,7 +98,7 @@ public class CameraEngine {
      * @param data 预览当前帧的数据
      */
     public static void doFaceDetect(byte[] data){
-
+        //Log.d(TAG, "doFaceDetect");
         int previewWidth = getCameraInfo().previewWidth;
         int previewHeight = getCameraInfo().previewHeight;
 
@@ -114,8 +118,8 @@ public class CameraEngine {
         mtx.preScale(-1.0f, 1.0f);
         mtx.postRotate(90.0f);
         if (null == mRotateBitmap){
-            mRGBBitmap = Bitmap.createBitmap(mRGBBitmap.getWidth(), mRGBBitmap.getHeight(),
-                    Bitmap.Config.ARGB_8888);
+            mRotateBitmap = Bitmap.createBitmap(mRGBBitmap, 0, 0, mRGBBitmap.getWidth(),
+                    mRGBBitmap.getHeight(), mtx, true);
         }
 
         if (null == mCroppedBitmap){
@@ -124,7 +128,7 @@ public class CameraEngine {
                     Bitmap.Config.ARGB_8888);
         }
 
-        drawResizedBitmap(mRotateBitmap, mCroppedBitmap);
+        //drawResizedBitmap(mRotateBitmap, mCroppedBitmap);
 
         if (null != mHandler){
             new Thread(new Runnable() {
@@ -137,7 +141,8 @@ public class CameraEngine {
                     List<VisionDetRet> results = null;
 
                     if (mhasFaceDet){
-                        results = mFaceDet.detect(mCroppedBitmap);
+                        //Log.d(TAG, "detect");
+                        results = mFaceDet.detect(mRGBBitmap);
                         //Log.d(TAG, results.toString());
                     }
 
@@ -146,27 +151,15 @@ public class CameraEngine {
                     if (results != null) {
                         for (final VisionDetRet ret : results) {
                             Log.d(TAG, ret.toString());
-                            float resizeRatio = 1.0f;
-                            Rect bounds = new Rect();
-                            bounds.left = (int) (ret.getLeft() * resizeRatio);
-                            bounds.top = (int) (ret.getTop() * resizeRatio);
-                            bounds.right = (int) (ret.getRight() * resizeRatio);
-                            bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-                            Canvas canvas = new Canvas(mRGBBitmap);
-                            canvas.drawRect(bounds, mFaceLandmardkPaint);
-
-                            // Draw landmark
-                            ArrayList<Point> landmarks = ret.getFaceLandmarks();
-                            for (Point point : landmarks) {
-                                int pointX = (int) (point.x * resizeRatio);
-                                int pointY = (int) (point.y * resizeRatio);
-                                canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
-                            }
+                            drawLandMark(ret);
                         }
+                        mHandler.sendEmptyMessage(4);
+                    } else {
+                        mHandler.sendEmptyMessage(3);
                     }
 
 
-                    mHandler.sendEmptyMessage(4);
+
                 }
             }).start();
         }
@@ -190,7 +183,7 @@ public class CameraEngine {
     }
 
 
-    /*private static void drawLandMark(VisionDetRet ret) {
+    private static void drawLandMark(VisionDetRet ret) {
         Log.d(TAG, ret.toString());
         float resizeRatio = 1.0f;
         //float resizeRatio = 2.5f;    // 预览尺寸 480x320  /  截取尺寸 192x128  (另外悬浮窗尺寸是 810x540)
@@ -199,27 +192,24 @@ public class CameraEngine {
         bounds.top = (int) (ret.getTop() * resizeRatio);
         bounds.right = (int) (ret.getRight() * resizeRatio);
         bounds.bottom = (int) (ret.getBottom() * resizeRatio);
-
+        Size previewSize = getPreviewSize();
         if (previewSize != null) {
-            final Bitmap mBitmap = Bitmap.createBitmap(previewSize.getHeight(), previewSize.getWidth(), Bitmap.Config.ARGB_8888);
-            Canvas canvas = new Canvas(mBitmap);
-            canvas.drawRect(bounds, mFaceLandmarkPaint);
+            if (null == mFaceBitmap){
+                mFaceBitmap = Bitmap.createBitmap(previewSize.width, previewSize.height, Bitmap.Config.ARGB_8888);
+            }
+            Canvas canvas = new Canvas(mFaceBitmap);
+            canvas.drawRect(bounds, mFaceLandmardkPaint);
 
             final ArrayList<Point> landmarks = ret.getFaceLandmarks();
             for (Point point : landmarks) {
                 int pointX = (int) (point.x * resizeRatio);
                 int pointY = (int) (point.y * resizeRatio);
-                canvas.drawCircle(pointX, pointY, 2, mFaceLandmarkPaint);
+                canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
             }
 
-            mUIHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    ivDraw.setImageBitmap(mBitmap);
-                }
-            });
+            mHandler.sendEmptyMessage(4);
         }
-    }*/
+    }
 
     /**
      * 打开相机
@@ -274,6 +264,8 @@ public class CameraEngine {
                         mRGBBitmap.recycle();
                         mRotateBitmap.recycle();
                         mCroppedBitmap.recycle();
+                        mFaceBitmap.recycle();
+                        mFaceBitmap = null;
                         mRGBBitmap = null;
                         mRotateBitmap = null;
                         mCroppedBitmap = null;
