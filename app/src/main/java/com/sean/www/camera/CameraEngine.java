@@ -38,8 +38,8 @@ public class CameraEngine {
     private static CameraClickener mListener;
     private static byte[] mBuffer;
     private static Bitmap mRGBBitmap = null;
-    public static int mTexture = OpenGlUtils.NO_TEXTURE;
     private static FaceDet mFaceDet;
+    private static boolean mUseArSticker;
     private static MagicCameraView.MyHandler mHandler = null;
     private static Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
         @Override
@@ -68,11 +68,20 @@ public class CameraEngine {
                 return;
             }
 
+
             //要重新调用，不然只会调用一次
             camera.addCallbackBuffer(mBuffer);
             //doFaceDetect(data);
         }
     };
+
+    /**
+     * 设置是否启动ar贴纸的标志
+     * @param flag boolean
+     */
+    public void setUseArSticker(boolean flag){
+        mUseArSticker = flag;
+    }
 
     /**
      * 人脸识别
@@ -135,9 +144,6 @@ public class CameraEngine {
                         }
                     }
 
-                    if (null != mRGBBitmap){
-                        mTexture = OpenGlUtils.loadTexture(mRGBBitmap, mTexture);
-                    }
 
                     mHandler.sendEmptyMessage(4);
                 }
@@ -163,14 +169,21 @@ public class CameraEngine {
                 cameraID = id;
                 setDefaultParameters();
                 camera.autoFocus(autoFocusCallback);
-                //因为Preview的大小是我们界面的大小，而不是返回YUV420sp的数据，所以对size要进行特殊处理
-                //int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
-                //size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
-                //mBuffer = new byte[size];
-                //camera.addCallbackBuffer(mBuffer);
-                //camera.setPreviewCallbackWithBuffer(mPreviewCallback);
-
-                //mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+                if (cameraID == 1){
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
+                            size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
+                            mBuffer = new byte[size];
+                            camera.addCallbackBuffer(mBuffer);
+                            camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+                            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+                        }
+                    }).start();
+                } else {
+                    camera.setPreviewCallbackWithBuffer(null);
+                }
                 return true;
             }catch(RuntimeException e){
                 return false;

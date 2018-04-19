@@ -84,8 +84,7 @@ public class CameraActivity extends Activity{
     } ;
 
     private ImageView btn_shutter;
-    private ImageView btn_mode;
-
+    private ImageView mArStickerIv;
     private ObjectAnimator animator;
 
     private final MagicFilterType[] types = new MagicFilterType[]{
@@ -151,12 +150,12 @@ public class CameraActivity extends Activity{
         mCameraFlayout = findViewById(R.id.fl_camera);
 
         btn_shutter = (ImageView)findViewById(R.id.btn_camera_shutter);
-        //btn_mode = (ImageView)findViewById(R.id.btn_camera_mode);
+        mArStickerIv = findViewById(R.id.iv_camera_ar_sticker);
 
         findViewById(R.id.btn_camera_filter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_closefilter).setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_shutter).setOnClickListener(btn_listener);
-
+        mArStickerIv.setOnClickListener(btn_listener);
         findViewById(R.id.btn_camera_beauty).setOnClickListener(btn_listener);
 
         //获取相机预览大小
@@ -256,17 +255,27 @@ public class CameraActivity extends Activity{
                 case R.id.btn_camera_closefilter:
                     hideFilters();
                     break;
+                case R.id.iv_camera_ar_sticker:
+
+                    showArSticker();
+                    break;
             }
         }
     };
 
+    /**
+     * 展示Ar贴纸画板
+     */
+    private void showArSticker() {
+    }
+
     private void switchMode(){
         if(mode == MODE_PIC){
             mode = MODE_VIDEO;
-            btn_mode.setImageResource(R.drawable.icon_camera);
+            //btn_mode.setImageResource(R.drawable.icon_camera);
         }else{
             mode = MODE_PIC;
-            btn_mode.setImageResource(R.drawable.icon_video);
+            //btn_mode.setImageResource(R.drawable.icon_video);
         }
     }
 
