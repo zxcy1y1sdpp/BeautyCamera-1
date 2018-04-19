@@ -252,7 +252,9 @@ public class CameraEngine {
         if(camera != null)
             camera.startPreview();
         if (mListener!=null){
-            mListener.startFocus();
+            if (cameraID == 0){
+                mListener.startFocus();
+            }
         }
 
     }
