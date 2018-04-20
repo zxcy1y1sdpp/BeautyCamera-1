@@ -38,9 +38,9 @@ public class CameraEngine {
     private static CameraClickener mListener;
     private static final int INPUT_SIZE = 128;
     private static byte[] mBuffer;
-    private static Bitmap mRGBBitmap = null;
-    private static Bitmap mRotateBitmap = null;
-    private static Bitmap mCroppedBitmap = null;
+    public static Bitmap mRGBBitmap = null;
+    public static Bitmap mRotateBitmap = null;
+    public static Bitmap mCroppedBitmap = null;
     public static Bitmap mFaceBitmap = null;
     private static FaceDet mFaceDet;
     private static boolean mUseArSticker;
@@ -117,10 +117,10 @@ public class CameraEngine {
         Matrix mtx = new Matrix();
         mtx.preScale(-1.0f, 1.0f);
         mtx.postRotate(90.0f);
-        if (null == mRotateBitmap){
-            mRotateBitmap = Bitmap.createBitmap(mRGBBitmap, 0, 0, mRGBBitmap.getWidth(),
+
+        mRotateBitmap = Bitmap.createBitmap(mRGBBitmap, 0, 0, mRGBBitmap.getWidth(),
                     mRGBBitmap.getHeight(), mtx, true);
-        }
+
 
         if (null == mCroppedBitmap){
             float ratio = (float) mRGBBitmap.getWidth() / mRGBBitmap.getHeight();
@@ -128,7 +128,7 @@ public class CameraEngine {
                     Bitmap.Config.ARGB_8888);
         }
 
-        //drawResizedBitmap(mRotateBitmap, mCroppedBitmap);
+        //drawResizedBitmap(mRotateBitmap, mRotateBitmap);
 
         if (null != mHandler){
             new Thread(new Runnable() {
@@ -142,18 +142,20 @@ public class CameraEngine {
 
                     if (mhasFaceDet){
                         //Log.d(TAG, "detect");
-                        results = mFaceDet.detect(mRGBBitmap);
+                        results = mFaceDet.detect(mRotateBitmap);
                         //Log.d(TAG, results.toString());
                     }
 
 
                     // Draw on bitmap
-                    if (results != null) {
-                        for (final VisionDetRet ret : results) {
+                    if (results != null && results.size() > 0) {
+                        for (VisionDetRet ret : results){
                             Log.d(TAG, ret.toString());
+                            Log.d(TAG, ret.getFaceLandmarks().toString());
+                            //Log.d(TAG, ret.toString());
                             drawLandMark(ret);
                         }
-                        mHandler.sendEmptyMessage(4);
+
                     } else {
                         mHandler.sendEmptyMessage(3);
                     }
@@ -184,7 +186,7 @@ public class CameraEngine {
 
 
     private static void drawLandMark(VisionDetRet ret) {
-        Log.d(TAG, ret.toString());
+
         float resizeRatio = 1.0f;
         //float resizeRatio = 2.5f;    // 预览尺寸 480x320  /  截取尺寸 192x128  (另外悬浮窗尺寸是 810x540)
         Rect bounds = new Rect();
@@ -192,6 +194,10 @@ public class CameraEngine {
         bounds.top = (int) (ret.getTop() * resizeRatio);
         bounds.right = (int) (ret.getRight() * resizeRatio);
         bounds.bottom = (int) (ret.getBottom() * resizeRatio);
+        Log.d(TAG, "left:" + bounds.left);
+        Log.d(TAG, "top:" + bounds.top);
+        Log.d(TAG, "right:" + bounds.right);
+        Log.d(TAG, "bottom:" + bounds.bottom);
         Size previewSize = getPreviewSize();
         if (previewSize != null) {
             if (null == mFaceBitmap){
@@ -201,13 +207,18 @@ public class CameraEngine {
             canvas.drawRect(bounds, mFaceLandmardkPaint);
 
             final ArrayList<Point> landmarks = ret.getFaceLandmarks();
+            if (landmarks.size() == 0){
+                Log.d(TAG, "landmarks == 0");
+            }
             for (Point point : landmarks) {
+                Log.d(TAG, "drawcircle");
                 int pointX = (int) (point.x * resizeRatio);
                 int pointY = (int) (point.y * resizeRatio);
                 canvas.drawCircle(pointX, pointY, 2, mFaceLandmardkPaint);
             }
 
             mHandler.sendEmptyMessage(4);
+            Log.d(TAG, "sentMessage");
         }
     }
 
@@ -223,16 +234,18 @@ public class CameraEngine {
                 setDefaultParameters();
                 camera.autoFocus(autoFocusCallback);
                 if (cameraID == 1){
+
                     int size = getCameraInfo().previewWidth * getCameraInfo().previewHeight;
                     size = size * ImageFormat.getBitsPerPixel(getParameters().getPreviewFormat()) / 8;
                     mBuffer = new byte[size];
                     camera.addCallbackBuffer(mBuffer);
                     camera.setPreviewCallbackWithBuffer(mPreviewCallback);
+                    mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
 
-                            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+
 
                             mFaceLandmardkPaint = new Paint();
                             mFaceLandmardkPaint.setColor(Color.WHITE);
@@ -256,11 +269,12 @@ public class CameraEngine {
         if(null != camera){
             if (null != mFaceDet){
                 mhasFaceDet = false;
+                mFaceDet.release();
+                mFaceDet = null;
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        mFaceDet.release();
-                        mFaceDet = null;
+
                         mRGBBitmap.recycle();
                         mRotateBitmap.recycle();
                         mCroppedBitmap.recycle();
@@ -312,7 +326,7 @@ public class CameraEngine {
 
         //获取到相机最大的预览Size
         Size previewSize = CameraUtils.getLargePreviewSize(camera);
-        parameters.setPreviewSize(previewSize.width, previewSize.height);
+        parameters.setPreviewSize(480, 320);
         //获取相机最大的图片Size
         Size pictureSize = CameraUtils.getLargePictureSize(camera);
         parameters.setPictureSize(pictureSize.width, pictureSize.height);
