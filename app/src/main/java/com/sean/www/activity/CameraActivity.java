@@ -262,7 +262,7 @@ public class CameraActivity extends Activity{
                     hideFilters();
                     break;
                 case R.id.iv_camera_ar_sticker:
-
+                    CameraEngine.setHandler(new MyHandler(CameraActivity.this));
                     showArSticker();
                     break;
             }
@@ -453,8 +453,12 @@ public class CameraActivity extends Activity{
             CameraActivity activity = mContext.get();
             if (null != activity){
                 switch (msg.what){
+                    case 3:
+                        activity.mFaceMarkIv.setImageResource(0);
+                        break;
                     case 4:
-
+                        activity.mFaceMarkIv.setImageBitmap(CameraEngine.mFaceBitmap);
+                        break;
                 }
             }
         }
